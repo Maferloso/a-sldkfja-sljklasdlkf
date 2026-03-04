@@ -370,6 +370,7 @@ input, textarea { font-family: inherit; }
   overflow: hidden;
   position: relative;
   margin-left: var(--sidebar);
+  width: calc(100% - var(--sidebar));
 }
 
 .page {
@@ -402,6 +403,10 @@ input, textarea { font-family: inherit; }
   display: flex;
   align-items: center;
   justify-content: space-between;
+  /* Fix: z-index mayor que el sidebar (100) para no taparse */
+  box-sizing: border-box;
+  width: 100%;
+  z-index: 110;
 }
 .ph-title {
   font-family: 'Montserrat', sans-serif;
