@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FLARE — Community</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --periwinkle: #8B9FD4; --periwinkle-light: #b8c5e8; --periwinkle-pale: #e8edf8;
+      --midnight: #2D1B69; --midnight-soft: #3d2a85;
+      --garnet: #6B1A2A;
+      --white: #FEFEFE; --off-white: #F7F5F2; --muted: #9E97A8;
+      --text: #1a1625; --text-soft: #5a5468; --border: rgba(139,159,212,0.18);
+      --badge-novice: #4fa3d4; --badge-pro: #c0392b; --badge-moai: #c9a84c;
+    }
+    body { font-family: 'DM Sans', sans-serif; background: var(--off-white); color: var(--text); height: 100vh; overflow: hidden; display: flex; }
+    ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)} }
+    @keyframes slideUp { from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)} }
+    @keyframes fadeIn { from{opacity:0}to{opacity:1} }
+
+    /* SIDEBAR */
+    .sidebar { width:72px; height:100vh; background:var(--white); border-right:1px solid var(--border); display:flex; flex-direction:column; align-items:center; padding:20px 0; gap:6px; flex-shrink:0; }
+    .nav-logo { font-family:'Cormorant Garamond',serif; font-size:20px; font-weight:600; letter-spacing:0.15em; color:var(--midnight); margin-bottom:14px; }
+    .nav-item { width:48px; height:48px; border-radius:14px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; gap:3px; position:relative; text-decoration:none; }
+    .nav-item svg { width:22px; height:22px; stroke:var(--muted); fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; transition:stroke 0.2s; }
+    .nav-item span { font-size:9px; letter-spacing:0.05em; text-transform:uppercase; color:var(--muted); transition:color 0.2s; }
+    .nav-item:hover { background:var(--periwinkle-pale); } .nav-item:hover svg { stroke:var(--periwinkle); } .nav-item:hover span { color:var(--periwinkle); }
+    .nav-item.active { background:var(--midnight); } .nav-item.active svg { stroke:white; } .nav-item.active span { color:rgba(255,255,255,0.7); }
+    .nav-dot { width:8px; height:8px; background:var(--garnet); border-radius:50%; position:absolute; top:8px; right:8px; border:2px solid white; }
+    .nav-avatar { margin-top:auto; width:40px; height:40px; border-radius:50%; border:2px solid var(--periwinkle-light); cursor:pointer; background:var(--periwinkle-pale); display:flex; align-items:center; justify-content:center; font-size:18px; }
+
+    /* MAIN */
+    .main { flex:1; height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+
+    /* EXPLORE */
+    #view-explore { flex:1; overflow:hidden; display:none; flex-direction:column; }
+    #view-explore.active { display:flex; }
+    .search-top { padding:22px 28px 16px; background:var(--white); border-bottom:1px solid var(--border); flex-shrink:0; }
+    .search-top-title { font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:400; margin-bottom:14px; }
+    .search-bar { position:relative; max-width:560px; }
+    .search-bar-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); width:17px; height:17px; stroke:var(--muted); fill:none; stroke-width:2; stroke-linecap:round; pointer-events:none; transition:stroke 0.2s; }
+    .search-bar input { width:100%; padding:12px 16px 12px 42px; background:var(--off-white); border:1.5px solid var(--border); border-radius:14px; font-family:'DM Sans',sans-serif; font-size:14px; color:var(--text); outline:none; transition:border-color 0.2s,background 0.2s,box-shadow 0.2s; }
+    .search-bar input:focus { border-color:var(--periwinkle); background:var(--white); box-shadow:0 0 0 3px rgba(139,159,212,0.12); }
+    .search-results { position:absolute; top:calc(100% + 6px); left:0; right:0; background:var(--white); border:1px solid var(--border); border-radius:14px; box-shadow:0 12px 32px rgba(45,27,105,0.12); z-index:100; overflow:hidden; display:none; animation:fadeUp 0.18s ease; }
+    .search-results.show { display:block; }
+    .search-result-item { padding:10px 14px; display:flex; align-items:center; gap:10px; cursor:pointer; transition:background 0.15s; }
+    .search-result-item:hover { background:var(--periwinkle-pale); }
+    .sr-avatar { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; }
+    .sr-name { font-size:13px; font-weight:600; }
+    .sr-cat { font-size:11px; color:var(--muted); }
+    .grid-scroll { flex:1; overflow-y:auto; padding:20px 28px 28px; }
+    .section-label { font-size:11px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
+    .communities-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px; }
+    .community-card { background:var(--white); border-radius:16px; overflow:hidden; border:1px solid var(--border); cursor:pointer; transition:transform 0.2s,box-shadow 0.2s; animation:fadeUp 0.4s both; }
+    .community-card:hover { transform:translateY(-3px); box-shadow:0 12px 28px rgba(45,27,105,0.1); }
+    .community-card:nth-child(1){animation-delay:.04s} .community-card:nth-child(2){animation-delay:.08s} .community-card:nth-child(3){animation-delay:.12s} .community-card:nth-child(4){animation-delay:.16s} .community-card:nth-child(5){animation-delay:.2s} .community-card:nth-child(6){animation-delay:.24s}
+    .card-poster { height:96px; display:flex; align-items:center; justify-content:center; font-size:44px; }
+    .card-body { padding:12px 14px; }
+    .card-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+    .card-name { font-size:13px; font-weight:600; }
+    .badge-pill { display:flex; align-items:center; gap:3px; padding:2px 7px; border-radius:20px; font-size:9px; font-weight:600; }
+    .badge-pill.novice { background:rgba(79,163,212,0.12); color:var(--badge-novice); }
+    .badge-pill.pro { background:rgba(192,57,43,0.1); color:var(--badge-pro); }
+    .badge-pill.moai { background:rgba(201,168,76,0.12); color:#a8852e; }
+    .card-desc { font-size:11px; color:var(--text-soft); line-height:1.5; margin-bottom:9px; }
+    .card-stats { display:flex; gap:12px; }
+    .card-stat { font-size:11px; color:var(--muted); } .card-stat strong { color:var(--text); font-weight:600; }
+
+    /* COMMUNITY VIEW */
+    #view-community { flex:1; display:none; flex-direction:column; overflow:hidden; position:relative; }
+    #view-community.active { display:flex; }
+    .comm-topbar { display:flex; align-items:center; gap:12px; padding:14px 24px; background:var(--white); border-bottom:1px solid var(--border); flex-shrink:0; }
+    .back-btn { width:30px; height:30px; border-radius:9px; background:var(--off-white); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.2s; flex-shrink:0; }
+    .back-btn:hover { background:var(--periwinkle-pale); }
+    .back-btn svg { width:15px; height:15px; stroke:var(--text); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    .topbar-av { width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; }
+    .topbar-name { font-size:14px; font-weight:600; flex:1; }
+    .topbar-meta { font-size:11px; color:var(--muted); }
+
+    /* Profile scroll */
+    .profile-scroll { flex:1; overflow-y:auto; }
+    .profile-banner { height:160px; display:flex; align-items:center; justify-content:center; font-size:72px; }
+    .profile-banner-emoji { opacity:0.25; }
+    .profile-card { margin:-56px 28px 0; background:var(--white); border-radius:20px; border:1px solid var(--border); padding:20px 24px 24px; box-shadow:0 8px 24px rgba(45,27,105,0.08); position:relative; z-index:1; animation:slideUp 0.4s cubic-bezier(0.22,1,0.36,1) both; }
+    .profile-top-row { display:flex; align-items:flex-start; gap:16px; margin-bottom:16px; }
+    .profile-av-wrap { position:relative; flex-shrink:0; }
+    .profile-av { width:68px; height:68px; border-radius:18px; border:3px solid white; display:flex; align-items:center; justify-content:center; font-size:32px; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+    .profile-badge-dot { position:absolute; bottom:-3px; right:-3px; width:20px; height:20px; border-radius:50%; border:2.5px solid white; display:flex; align-items:center; justify-content:center; font-size:9px; }
+    .profile-badge-dot.moai{background:var(--badge-moai)} .profile-badge-dot.novice{background:var(--badge-novice)} .profile-badge-dot.pro{background:var(--badge-pro)}
+    .profile-text { flex:1; padding-top:4px; }
+    .profile-comm-name { font-size:18px; font-weight:700; margin-bottom:3px; }
+    .profile-category { font-size:12px; color:var(--muted); margin-bottom:8px; }
+    .profile-actions { display:flex; gap:10px; margin-bottom:20px; }
+    .btn-join { flex:1; padding:11px; background:var(--midnight); color:white; border:none; border-radius:12px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:background 0.2s; }
+    .btn-join:hover { background:var(--midnight-soft); }
+    .btn-chat-profile { flex:1; padding:11px; background:var(--off-white); color:var(--midnight); border:1.5px solid var(--border); border-radius:12px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:7px; }
+    .btn-chat-profile:hover { background:var(--periwinkle-pale); border-color:var(--periwinkle); }
+    .btn-chat-profile svg { width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; }
+
+    /* Stats */
+    .profile-stats { display:grid; grid-template-columns:repeat(4,1fr); background:var(--off-white); border-radius:12px; overflow:hidden; margin-bottom:20px; border:1px solid var(--border); }
+    .pstat { padding:14px 10px; text-align:center; border-right:1px solid var(--border); } .pstat:last-child{border-right:none;}
+    .pstat.clickable { cursor:pointer; transition:background 0.15s; } .pstat.clickable:hover { background:var(--periwinkle-pale); }
+    .pstat-val { font-size:17px; font-weight:700; color:var(--midnight); }
+    .pstat-label { font-size:10px; color:var(--muted); margin-top:2px; }
+
+    /* Sections */
+    .section-box { margin-bottom:16px; }
+    .section-title { font-size:12px; font-weight:600; color:var(--text); margin-bottom:10px; }
+    .section-text { font-size:13px; color:var(--text-soft); line-height:1.7; }
+
+    /* Members button */
+    .btn-members { width:100%; padding:13px 16px; background:var(--off-white); border:1.5px solid var(--border); border-radius:12px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; color:var(--midnight); cursor:pointer; display:flex; align-items:center; gap:0; transition:all 0.2s; }
+    .btn-members:hover { background:var(--periwinkle-pale); border-color:var(--periwinkle); }
+    .btn-members svg { width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; margin-left:auto; }
+    .member-avatars { display:flex; margin-right:10px; }
+    .member-av-mini { width:26px; height:26px; border-radius:50%; background:var(--periwinkle-pale); border:2px solid white; display:flex; align-items:center; justify-content:center; font-size:13px; margin-left:-6px; }
+    .member-av-mini:first-child { margin-left:0; }
+
+    /* Bandas */
+    .banda-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
+    .banda-item:last-child { border-bottom:none; padding-bottom:0; }
+    .banda-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+    .banda-name { font-size:12px; font-weight:600; }
+    .banda-desc { font-size:11px; color:var(--muted); margin-top:1px; }
+    .banda-tag { padding:3px 9px; border-radius:20px; font-size:10px; font-weight:600; }
+
+    /* Posts preview */
+    @keyframes likePop { 0%{transform:scale(1)} 40%{transform:scale(1.4)} 70%{transform:scale(0.9)} 100%{transform:scale(1)} }
+    .posts-preview { display:flex; flex-direction:column; gap:10px; }
+    .post-mini { background:var(--white); border-radius:16px; border:1px solid var(--border); overflow:hidden; box-shadow:0 2px 8px rgba(45,27,105,0.05); }
+    .post-mini-body { padding:12px 14px; }
+    .post-mini-author { font-size:11px; font-weight:600; color:var(--text-soft); margin-bottom:5px; }
+    .post-mini-text { font-size:12px; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .post-mini-img { width:100%; max-height:320px; object-fit:cover; display:block; }
+    .post-mini-actions { display:flex; gap:6px; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); }
+    .post-action-btn { display:flex; align-items:center; gap:5px; padding:6px 12px; border-radius:20px; border:1.5px solid var(--border); background:transparent; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500; color:var(--text-soft); cursor:pointer; transition:all 0.18s; user-select:none; }
+    .post-action-btn:hover { background:var(--periwinkle-pale); border-color:var(--periwinkle); color:var(--midnight); }
+    .post-action-btn.liked { background:rgba(192,57,43,0.08); border-color:rgba(192,57,43,0.3); color:#c0392b; }
+    .post-action-btn.liked .like-icon { animation:likePop 0.35s ease; }
+    .post-action-btn.commented { background:var(--periwinkle-pale); border-color:var(--periwinkle); color:var(--midnight); }
+    .post-action-btn svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; transition:fill 0.18s; }
+    .post-action-btn.liked svg { fill:#c0392b; stroke:#c0392b; }
+    .post-saves { margin-left:auto; display:flex; align-items:center; gap:5px; font-size:12px; color:var(--muted); padding:6px 8px; }
+    /* Comments panel */
+    .comments-panel { display:none; border-top:1px solid var(--border); background:var(--off-white); }
+    .comments-panel.open { display:block; }
+    .comments-list { padding:10px 14px; display:flex; flex-direction:column; gap:8px; max-height:200px; overflow-y:auto; }
+    .comment-item { display:flex; gap:8px; }
+    .comment-av { width:26px; height:26px; border-radius:50%; background:var(--periwinkle-pale); display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0; }
+    .comment-bubble { background:var(--white); border:1px solid var(--border); border-radius:4px 12px 12px 12px; padding:7px 10px; flex:1; }
+    .comment-author { font-size:10px; font-weight:600; color:var(--text-soft); margin-bottom:2px; }
+    .comment-text { font-size:12px; line-height:1.4; color:var(--text); }
+    .comment-input-row { display:flex; gap:8px; align-items:center; padding:8px 14px 10px; border-top:1px solid var(--border); }
+    .comment-input-row input { flex:1; border:1.5px solid var(--border); border-radius:20px; padding:7px 13px; font-family:'DM Sans',sans-serif; font-size:12px; color:var(--text); outline:none; background:var(--white); transition:border-color 0.2s; }
+    .comment-input-row input:focus { border-color:var(--periwinkle); }
+    .comment-send { width:30px; height:30px; background:var(--midnight); border:none; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background 0.2s; }
+    .comment-send:hover { background:var(--midnight-soft); }
+    .comment-send svg { width:13px; height:13px; stroke:white; fill:none; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
+    .no-comments { font-size:11px; color:var(--muted); text-align:center; padding:10px 0 4px; }
+    .empty-posts { text-align:center; padding:28px 16px; color:var(--muted); font-size:12px; }
+    .empty-posts-icon { font-size:28px; margin-bottom:8px; }
+
+    /* MEMBERS MODAL */
+    .modal-backdrop { position:absolute; inset:0; background:rgba(26,22,37,0.4); z-index:30; display:none; animation:fadeIn 0.2s; }
+    .modal-backdrop.open { display:flex; align-items:flex-end; }
+    .modal-sheet { width:100%; background:var(--white); border-radius:20px 20px 0 0; max-height:70vh; display:flex; flex-direction:column; animation:slideUp 0.3s cubic-bezier(0.22,1,0.36,1); }
+    .modal-handle { width:36px; height:4px; background:var(--border); border-radius:4px; margin:12px auto 0; flex-shrink:0; }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; padding:14px 20px 12px; border-bottom:1px solid var(--border); flex-shrink:0; }
+    .modal-title { font-size:15px; font-weight:600; }
+    .modal-close { width:28px; height:28px; border-radius:8px; background:var(--off-white); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:14px; transition:background 0.15s; }
+    .modal-close:hover { background:var(--periwinkle-pale); }
+    .modal-search { padding:10px 16px; border-bottom:1px solid var(--border); flex-shrink:0; }
+    .modal-search input { width:100%; padding:8px 12px 8px 32px; background:var(--off-white); border:1px solid var(--border); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:12px; color:var(--text); outline:none; }
+    .modal-search-wrap { position:relative; }
+    .modal-search-wrap svg { position:absolute; left:10px; top:50%; transform:translateY(-50%); width:13px; height:13px; stroke:var(--muted); fill:none; stroke-width:2; stroke-linecap:round; pointer-events:none; }
+    .modal-list { flex:1; overflow-y:auto; padding:8px 0; }
+    .member-row { display:flex; align-items:center; gap:12px; padding:10px 20px; cursor:pointer; transition:background 0.15s; }
+    .member-row:hover { background:var(--periwinkle-pale); }
+    .member-row-av { width:42px; height:42px; border-radius:50%; background:var(--periwinkle-pale); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+    .member-row-info { flex:1; }
+    .member-row-name { font-size:13px; font-weight:600; }
+    .member-row-role { font-size:11px; color:var(--muted); margin-top:1px; }
+    .member-row-badge { font-size:13px; }
+
+    /* CHAT OVERLAY */
+    .chat-overlay { position:absolute; inset:0; background:var(--white); display:flex; flex-direction:column; z-index:20; transform:translateX(100%); transition:transform 0.3s cubic-bezier(0.22,1,0.36,1); }
+    .chat-overlay.open { transform:translateX(0); }
+    .chat-overlay-header { display:flex; align-items:center; gap:12px; padding:14px 20px; border-bottom:1px solid var(--border); flex-shrink:0; }
+    .chat-close { width:30px; height:30px; border-radius:9px; background:var(--off-white); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.2s; }
+    .chat-close:hover { background:var(--periwinkle-pale); }
+    .chat-close svg { width:15px; height:15px; stroke:var(--text); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    .chat-overlay-name { font-size:14px; font-weight:600; flex:1; }
+    .chat-online { font-size:11px; color:#4caf6e; font-weight:500; }
+    .chat-messages { flex:1; overflow-y:auto; padding:16px 20px; display:flex; flex-direction:column; gap:14px; }
+    .msg-group { display:flex; gap:9px; } .msg-group.mine { flex-direction:row-reverse; }
+    .msg-avatar { width:32px; height:32px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:15px; background:var(--periwinkle-pale); }
+    .msg-content { max-width:65%; }
+    .msg-name { font-size:10px; color:var(--muted); margin-bottom:3px; font-weight:500; }
+    .msg-group.mine .msg-name { text-align:right; }
+    .msg-bubble { padding:9px 13px; font-size:13px; line-height:1.5; background:var(--off-white); border:1px solid var(--border); color:var(--text); border-radius:4px 14px 14px 14px; }
+    .msg-group.mine .msg-bubble { background:var(--midnight); color:white; border:none; border-radius:14px 4px 14px 14px; }
+    .msg-time { font-size:10px; color:var(--muted); margin-top:3px; }
+    .msg-group.mine .msg-time { text-align:right; }
+    .chat-input-area { padding:12px 18px; border-top:1px solid var(--border); display:flex; gap:9px; align-items:flex-end; flex-shrink:0; }
+    .chat-input { flex:1; border:1px solid var(--border); border-radius:11px; padding:9px 13px; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--text); outline:none; resize:none; min-height:38px; max-height:96px; background:var(--off-white); transition:border-color 0.2s; }
+    .chat-input:focus { border-color:var(--periwinkle); background:white; }
+    .send-btn { width:38px; height:38px; background:var(--midnight); border:none; border-radius:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.2s; flex-shrink:0; }
+    .send-btn:hover { background:var(--midnight-soft); }
+    .send-btn svg { width:16px; height:16px; stroke:white; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  </style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="nav-logo">F</div>
+  <a class="nav-item" href="#">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Inicio</span>
+  </a>
+  <a class="nav-item active" href="#">
+    <div class="nav-dot"></div>
+    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+    <span>Community</span>
+  </a>
+  <a class="nav-item" href="#">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    <span>Meet</span>
+  </a>
+  <div class="nav-avatar">👤</div>
+</nav>
+
+<div class="main">
+
+  <!-- EXPLORE -->
+  <div id="view-explore" class="active">
+    <div class="search-top">
+      <div class="search-top-title">Comunidades</div>
+      <div class="search-bar">
+        <svg class="search-bar-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" placeholder="Buscar comunidades..." id="searchInput" oninput="onSearch(this.value)" onfocus="showResults()" onblur="hideResults()"/>
+        <div class="search-results" id="searchResults"></div>
+      </div>
+    </div>
+    <div class="grid-scroll">
+      <div class="section-label">Tus comunidades</div>
+      <div class="communities-grid" id="communitiesGrid"></div>
+    </div>
+  </div>
+
+  <!-- COMMUNITY PROFILE -->
+  <div id="view-community">
+    <div class="comm-topbar">
+      <button class="back-btn" onclick="showExplore()">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="topbar-av" id="topbarAv"></div>
+      <div style="flex:1">
+        <div class="topbar-name" id="topbarName"></div>
+        <div class="topbar-meta" id="topbarMeta"></div>
+      </div>
+    </div>
+
+    <div class="profile-scroll">
+      <div class="profile-banner" id="profileBanner">
+        <span class="profile-banner-emoji" id="profileBannerEmoji"></span>
+      </div>
+      <div class="profile-card">
+        <div class="profile-top-row">
+          <div class="profile-av-wrap">
+            <div class="profile-av" id="profileAv"></div>
+            <div class="profile-badge-dot" id="profileBadgeDot"></div>
+          </div>
+          <div class="profile-text">
+            <div class="profile-comm-name" id="profileName"></div>
+            <div class="profile-category" id="profileCat"></div>
+            <div id="profileBadgeRow"></div>
+          </div>
+        </div>
+
+        <div class="profile-actions">
+          <button class="btn-join">Unirse</button>
+          <button class="btn-chat-profile" onclick="openChat()">
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            Chat grupal
+          </button>
+        </div>
+
+        <div class="profile-stats" id="profileStats"></div>
+
+        <div class="section-box">
+          <div class="section-title">✏️ Posts recientes</div>
+          <div class="posts-preview" id="profilePosts"></div>
+        </div>
+      </div>
+      <div style="height:32px"></div>
+    </div>
+
+    <!-- MEMBERS MODAL -->
+    <div class="modal-backdrop" id="membersModal" onclick="closeMembersOnBackdrop(event)">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <div class="modal-title" id="modalTitle"></div>
+          <button class="modal-close" onclick="closeMembers()">✕</button>
+        </div>
+        <div class="modal-search">
+          <div class="modal-search-wrap">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input type="text" placeholder="Buscar miembros..." oninput="filterMembers(this.value)" id="memberSearch"/>
+          </div>
+        </div>
+        <div class="modal-list" id="membersList"></div>
+      </div>
+    </div>
+
+    <!-- CHAT OVERLAY -->
+    <div class="chat-overlay" id="chatOverlay">
+      <div class="chat-overlay-header">
+        <button class="chat-close" onclick="closeChat()">
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div>
+          <div class="chat-overlay-name" id="chatTitle"></div>
+          <div class="chat-online" id="chatOnline"></div>
+        </div>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input-area">
+        <textarea class="chat-input" placeholder="Escribe un mensaje..." rows="1" id="chatInput" onkeydown="handleKey(event)"></textarea>
+        <button class="send-btn" onclick="sendMsg()">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const _IMG1='https://picsum.photos/800/960'
+const _IMG2='https://picsum.photos/800/960'
+
+const COMMUNITIES = [
+  { id:1, name:"Diseñadores MX", emoji:"🎨", bg:"linear-gradient(135deg,#667eea,#764ba2)", badge:"moai",
+    memberCount:1248, online:47, category:"Diseño & Arte",
+    desc:"Comunidad de diseñadores mexicanos. Recursos, feedback y colaboración creativa.",
+    posts:[
+      {author:"Mafer",av:"👩‍🎨",time:"hace 2h",img:_IMG1,likes:24,comments:8,saves:11},
+      {author:"Mafer",av:"👩‍🎨",time:"hace 5h",img:_IMG2,likes:17,comments:12,saves:5},
+    ],
+    chat:[
+      {author:"Carlos M.",av:"👨‍💻",time:"10:32",text:"¿Alguien vio el keynote de Apple?",mine:false},
+      {author:"Ana R.",av:"👩",time:"10:35",text:"Sí!! Las animaciones nuevas están increíbles 🔥",mine:false},
+      {author:"Tú",av:"👤",time:"10:37",text:"El nuevo Figma también tiene muchas features nuevas",mine:true},
+      {author:"Diego F.",av:"🧑",time:"10:40",text:"nuevo hilo de recursos en posts 👆",mine:false},
+    ],
+    membersList:[
+      {name:"María G.",av:"👩",role:"Admin",badge:"moai"},
+      {name:"Rodrigo P.",av:"👨",role:"Moderador",badge:"pro"},
+      {name:"Lucía T.",av:"👩‍🎨",role:"Miembro",badge:"novice"},
+      {name:"Carlos V.",av:"👨‍💻",role:"Miembro",badge:"pro"},
+      {name:"Ana R.",av:"👩",role:"Miembro",badge:"novice"},
+      {name:"Diego F.",av:"🧑",role:"Miembro",badge:"novice"},
+      {name:"Fernanda M.",av:"👩‍🎨",role:"Miembro",badge:"pro"},
+      {name:"Sebastián R.",av:"👨",role:"Miembro",badge:"novice"},
+    ]
+  },
+  { id:2, name:"Startup Founders", emoji:"🚀", bg:"linear-gradient(135deg,#f093fb,#f5576c)", badge:"pro",
+    memberCount:832, online:23, category:"Negocios & Tech",
+    desc:"Para fundadores en etapa temprana. Fundraising, producto y crecimiento.",
+    posts:[],
+    chat:[
+      {author:"Sofía L.",av:"👩‍💼",time:"09:15",text:"¿Alguien ha levantado con angels en LATAM?",mine:false},
+      {author:"Miguel T.",av:"🧑‍💼",time:"09:22",text:"Sí, tengo contactos. DM",mine:false},
+      {author:"Tú",av:"👤",time:"09:30",text:"También me interesa esa info 🙏",mine:true},
+    ],
+    membersList:[
+      {name:"Jorge A.",av:"👨‍💼",role:"Admin",badge:"moai"},
+      {name:"Sofía L.",av:"👩‍💼",role:"Moderadora",badge:"pro"},
+      {name:"Miguel T.",av:"🧑‍💼",role:"Miembro",badge:"pro"},
+      {name:"Valeria M.",av:"👩",role:"Miembro",badge:"novice"},
+      {name:"Andrés C.",av:"👨",role:"Miembro",badge:"novice"},
+    ]
+  },
+  { id:3, name:"Tech Latam", emoji:"💻", bg:"linear-gradient(135deg,#4facfe,#00f2fe)", badge:"novice",
+    memberCount:2140, online:89, category:"Tecnología",
+    desc:"Desarrolladores, ingenieros y entusiastas de tech en América Latina.",
+    posts:[],
+    chat:[
+      {author:"Paula M.",av:"👩‍💻",time:"11:00",text:"¿Alguien usa Rust en producción?",mine:false},
+      {author:"Tú",av:"👤",time:"11:05",text:"Nosotros lo usamos para el backend de pagos, muy estable",mine:true},
+    ],
+    membersList:[
+      {name:"Paula M.",av:"👩‍💻",role:"Admin",badge:"moai"},
+      {name:"Carlos V.",av:"👨‍💻",role:"Moderador",badge:"pro"},
+      {name:"Esteban R.",av:"🧑",role:"Miembro",badge:"novice"},
+      {name:"Laura S.",av:"👩",role:"Miembro",badge:"novice"},
+      {name:"Tomás B.",av:"👨",role:"Miembro",badge:"pro"},
+      {name:"Daniela A.",av:"👩‍💻",role:"Miembro",badge:"novice"},
+    ]
+  },
+  { id:4, name:"Foto & Visual", emoji:"📸", bg:"linear-gradient(135deg,#fa709a,#fee140)", badge:"moai",
+    memberCount:567, online:12, category:"Fotografía",
+    desc:"Comparte tu trabajo, aprende técnicas y conecta con otros visuales.",
+    posts:[],
+    chat:[
+      {author:"Valeria R.",av:"📸",time:"08:45",text:"álbum de la semana en posts ✨",mine:false},
+      {author:"Tú",av:"👤",time:"08:50",text:"Increíbles fotos como siempre 🎶",mine:true},
+    ],
+    membersList:[
+      {name:"Diego S.",av:"📷",role:"Admin",badge:"moai"},
+      {name:"Valeria R.",av:"📸",role:"Moderadora",badge:"pro"},
+      {name:"Tomás L.",av:"🧑",role:"Miembro",badge:"novice"},
+    ]
+  },
+  { id:5, name:"Música & Cultura", emoji:"🎵", bg:"linear-gradient(135deg,#a18cd1,#fbc2eb)", badge:"novice",
+    memberCount:413, online:8, category:"Música & Arte",
+    desc:"Artistas, músicos y amantes de la cultura. Comparte tu proceso creativo.",
+    posts:[],
+    chat:[
+      {author:"Emilio R.",av:"🎹",time:"18:00",text:"¿Alguien va al festival este fin?",mine:false},
+      {author:"Tú",av:"👤",time:"18:10",text:"Sí! Nos vemos ahí 🎪",mine:true},
+    ],
+    membersList:[
+      {name:"Renata M.",av:"🎸",role:"Admin",badge:"pro"},
+      {name:"Emilio R.",av:"🎹",role:"Miembro",badge:"novice"},
+      {name:"Daniela C.",av:"👩",role:"Miembro",badge:"novice"},
+    ]
+  },
+  { id:6, name:"Escritura Creativa", emoji:"✍️", bg:"linear-gradient(135deg,#43e97b,#38f9d7)", badge:"pro",
+    memberCount:298, online:6, category:"Literatura",
+    desc:"Escritores que comparten drafts, reciben feedback y publican juntos.",
+    posts:[],
+    chat:[
+      {author:"Mateo A.",av:"📝",time:"15:00",text:"¿Alguien quiere un grupo de lectura este mes?",mine:false},
+      {author:"Tú",av:"👤",time:"15:12",text:"¡Apúntame! ¿Qué libro proponen?",mine:true},
+    ],
+    membersList:[
+      {name:"Isabela C.",av:"📖",role:"Admin",badge:"moai"},
+      {name:"Mateo A.",av:"📝",role:"Moderador",badge:"pro"},
+      {name:"Carmen R.",av:"👩",role:"Miembro",badge:"novice"},
+    ]
+  },
+];
+
+const BADGE_LABEL={novice:"Novato Azul",pro:"Profesional Rojo",moai:"Moai Dorado"};
+const BADGE_ICON={novice:"🔵",pro:"🔴",moai:"🗿"};
+let current = null;
+
+function badgePill(t){ return '<span class="badge-pill '+t+'">'+BADGE_ICON[t]+' '+BADGE_LABEL[t]+'</span>'; }
+
+// GRID
+function renderGrid(list){
+  document.getElementById('communitiesGrid').innerHTML=(list||COMMUNITIES).map(c=>`
+    <div class="community-card" onclick="openCommunity(${c.id})">
+      <div class="card-poster" style="background:${c.bg}">${c.emoji}</div>
+      <div class="card-body">
+        <div class="card-top"><span class="card-name">${c.name}</span>${badgePill(c.badge)}</div>
+        <p class="card-desc">${c.desc.substring(0,72)}...</p>
+        <div class="card-stats">
+          <span class="card-stat"><strong>${c.memberCount.toLocaleString()}</strong> miembros</span>
+          <span class="card-stat"><strong>${c.online}</strong> en línea</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// SEARCH
+function onSearch(val){
+  const q=val.trim().toLowerCase();
+  if(!q){ hideResults(); renderGrid(); return; }
+  const f=COMMUNITIES.filter(c=>c.name.toLowerCase().includes(q)||c.category.toLowerCase().includes(q));
+  renderGrid(f);
+  const el=document.getElementById('searchResults');
+  el.innerHTML=f.map(c=>`
+    <div class="search-result-item" onmousedown="openCommunity(${c.id})">
+      <div class="sr-avatar" style="background:${c.bg}">${c.emoji}</div>
+      <div style="flex:1"><div class="sr-name">${c.name}</div><div class="sr-cat">${c.category} · ${c.memberCount.toLocaleString()} miembros</div></div>
+      ${badgePill(c.badge)}
+    </div>`).join('');
+  el.classList.add('show');
+}
+function showResults(){ if(document.getElementById('searchInput').value.trim()) document.getElementById('searchResults').classList.add('show'); }
+function hideResults(){ setTimeout(()=>document.getElementById('searchResults').classList.remove('show'),150); }
+
+// POSTS
+function renderPosts() {
+  const postsEl = document.getElementById('profilePosts');
+  if (!current || !current.posts || !current.posts.length) {
+    postsEl.innerHTML = '<div class="empty-posts"><div class="empty-posts-icon">📷</div><div>Aún no hay posts en esta comunidad</div></div>';
+    return;
+  }
+  postsEl.innerHTML = current.posts.map(function(p, i) {
+    var imgHtml = p.img ? '<img class="post-mini-img" src="' + p.img + '" alt="post"/>' : '';
+    var textHtml = p.text ? '<div class="post-mini-text">' + p.text + '</div>' : '';
+    var likedClass = p._liked ? 'liked' : '';
+    var commentedClass = p._showComments ? 'commented' : '';
+    var commentCount = p._commentList.length;
+    var commentsHtml = p._commentList.length === 0
+      ? '<div class="no-comments">Sin comentarios aún. ¡Sé el primero!</div>'
+      : p._commentList.map(function(c) {
+          return '<div class="comment-item"><div class="comment-av">' + c.av + '</div><div class="comment-bubble"><div class="comment-author">' + c.author + '</div><div class="comment-text">' + c.text + '</div></div></div>';
+        }).join('');
+    var panelClass = p._showComments ? 'comments-panel open' : 'comments-panel';
+    return '<div class="post-mini" id="post-' + i + '">' +
+      imgHtml +
+      '<div class="post-mini-body">' +
+        '<div class="post-mini-author">' + p.author + ' · ' + p.time + '</div>' +
+        textHtml +
+        '<div class="post-mini-actions">' +
+          '<button class="post-action-btn ' + likedClass + '" onclick="toggleLike(' + i + ')">' +
+            '<span class="like-icon"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></span>' +
+            ' ' + p._likeCount +
+          '</button>' +
+          '<button class="post-action-btn ' + commentedClass + '" onclick="toggleComments(' + i + ')">' +
+            '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>' +
+            ' ' + commentCount +
+          '</button>' +
+          '<span class="post-saves"><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg> ' + p.saves + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="' + panelClass + '" id="comments-' + i + '">' +
+        '<div class="comments-list" id="comments-list-' + i + '">' + commentsHtml + '</div>' +
+        '<div class="comment-input-row">' +
+          '<input type="text" placeholder="Escribe un comentario..." id="comment-input-' + i + '" onkeydown="handleCommentKey(event,' + i + ')"/>' +
+          '<button class="comment-send" onclick="submitComment(' + i + ')"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function toggleLike(i) {
+  var p = current.posts[i];
+  p._liked = !p._liked;
+  p._likeCount += p._liked ? 1 : -1;
+  renderPosts();
+}
+
+function toggleComments(i) {
+  var p = current.posts[i];
+  p._showComments = !p._showComments;
+  renderPosts();
+  if (p._showComments) {
+    setTimeout(function() {
+      var inp = document.getElementById('comment-input-' + i);
+      if (inp) inp.focus();
+    }, 50);
+  }
+}
+
+function handleCommentKey(e, i) {
+  if (e.key === 'Enter') { e.preventDefault(); submitComment(i); }
+}
+
+function submitComment(i) {
+  var inp = document.getElementById('comment-input-' + i);
+  var t = inp ? inp.value.trim() : '';
+  if (!t) return;
+  current.posts[i]._commentList.push({ author: 'Tú', av: '👤', text: t });
+  inp.value = '';
+  renderPosts();
+}
+
+// OPEN COMMUNITY
+function openCommunity(id){
+  current=COMMUNITIES.find(c=>c.id===id);
+
+  document.getElementById('topbarAv').innerHTML='<div style="width:32px;height:32px;border-radius:9px;background:'+current.bg+';display:flex;align-items:center;justify-content:center;font-size:15px">'+current.emoji+'</div>';
+  document.getElementById('topbarName').textContent=current.name;
+  document.getElementById('topbarMeta').textContent=current.memberCount.toLocaleString()+' miembros · '+current.online+' en línea';
+
+  document.getElementById('profileBanner').style.background=current.bg;
+  document.getElementById('profileBannerEmoji').textContent=current.emoji;
+  document.getElementById('profileAv').style.background=current.bg;
+  document.getElementById('profileAv').textContent=current.emoji;
+  var bd=document.getElementById('profileBadgeDot');
+  bd.className='profile-badge-dot '+current.badge;
+  bd.textContent=BADGE_ICON[current.badge];
+  document.getElementById('profileName').textContent=current.name;
+  document.getElementById('profileCat').textContent=current.category;
+  document.getElementById('profileBadgeRow').innerHTML=badgePill(current.badge);
+
+  document.getElementById('profileStats').innerHTML=
+    '<div class="pstat clickable" onclick="openMembers()"><div class="pstat-val">'+current.memberCount.toLocaleString()+'</div><div class="pstat-label">Miembros</div></div>'+
+    '<div class="pstat"><div class="pstat-val">'+current.online+'</div><div class="pstat-label">En línea</div></div>'+
+    '<div class="pstat"><div class="pstat-val">'+(current.posts.length*12||0)+'</div><div class="pstat-label">Posts</div></div>'+
+    '<div class="pstat"><div class="pstat-val">4.8⭐</div><div class="pstat-label">Rating</div></div>';
+
+  current.posts.forEach(function(p) {
+    if (p._liked === undefined) p._liked = false;
+    if (p._likeCount === undefined) p._likeCount = p.likes;
+    if (p._showComments === undefined) p._showComments = false;
+    if (p._commentList === undefined) {
+      // Pre-populate with placeholder comments to match the original count
+      var names = [
+        {author:"Lucía T.",av:"👩‍🎨"}, {author:"Carlos V.",av:"👨‍💻"},
+        {author:"Ana R.",av:"👩"}, {author:"Diego F.",av:"🧑"},
+        {author:"Fernanda M.",av:"👩‍🎨"}, {author:"Rodrigo P.",av:"👨"},
+        {author:"Sebastián R.",av:"👨"}, {author:"María G.",av:"👩"},
+        {author:"Tomás B.",av:"👨"}, {author:"Paula M.",av:"👩‍💻"},
+        {author:"Valeria M.",av:"👩"}, {author:"Emilio R.",av:"🎹"},
+      ];
+      var texts = [
+        "¡Me encanta el trazo, muy expresivo! 🎨",
+        "El detalle está increíble, ¿cuánto tiempo te tardó?",
+        "Guardado para inspiración 🔖",
+        "El sombreado está muy bien logrado",
+        "¡Qué tierno! Me encanta el estilo",
+        "El trazo a mano se nota y le da mucho carácter",
+        "¿Usaste alguna referencia o es de imaginación?",
+        "Me recuerda al estilo de ilustración editorial",
+        "Brutal el nivel de detalle en tan poco espacio",
+        "¡Comparte más de estos por favor! 🙌",
+        "El contraste de luz y sombra está muy bien",
+        "Definitivamente uno de los mejores posts de la semana",
+      ];
+      p._commentList = [];
+      var count = p.comments || 0;
+      for (var j = 0; j < count; j++) {
+        p._commentList.push({
+          author: names[j % names.length].author,
+          av: names[j % names.length].av,
+          text: texts[j % texts.length]
+        });
+      }
+    }
+  });
+  renderPosts();
+
+  document.getElementById('view-explore').classList.remove('active');
+  document.getElementById('view-community').classList.add('active');
+  document.querySelector('.profile-scroll').scrollTop=0;
+}
+
+function showExplore(){
+  document.getElementById('view-community').classList.remove('active');
+  document.getElementById('view-explore').classList.add('active');
+  closeChat(); closeMembers(); current=null;
+}
+
+// MEMBERS MODAL
+function openMembers(){
+  document.getElementById('modalTitle').textContent='Miembros de '+current.name;
+  renderMembersList(current.membersList);
+  document.getElementById('membersModal').classList.add('open');
+  document.getElementById('memberSearch').value='';
+}
+function closeMembers(){ document.getElementById('membersModal').classList.remove('open'); }
+function closeMembersOnBackdrop(e){ if(e.target===document.getElementById('membersModal')) closeMembers(); }
+
+function renderMembersList(list){
+  document.getElementById('membersList').innerHTML=list.map(m=>`
+    <div class="member-row">
+      <div class="member-row-av">${m.av}</div>
+      <div class="member-row-info">
+        <div class="member-row-name">${m.name}</div>
+        <div class="member-row-role">${m.role}</div>
+      </div>
+      <span class="member-row-badge">${BADGE_ICON[m.badge]}</span>
+    </div>`).join('');
+}
+
+function filterMembers(val){
+  var q=val.trim().toLowerCase();
+  var filtered=q ? current.membersList.filter(m=>m.name.toLowerCase().includes(q)) : current.membersList;
+  renderMembersList(filtered);
+}
+
+// CHAT
+function openChat(){
+  document.getElementById('chatTitle').textContent=current.name;
+  document.getElementById('chatOnline').textContent=current.online+' en línea ahora';
+  renderChatMessages();
+  document.getElementById('chatOverlay').classList.add('open');
+}
+function closeChat(){ document.getElementById('chatOverlay').classList.remove('open'); }
+
+function renderChatMessages(){
+  var el=document.getElementById('chatMessages');
+  el.innerHTML=current.chat.map(m=>`
+    <div class="msg-group ${m.mine?'mine':''}">
+      <div class="msg-avatar">${m.av}</div>
+      <div class="msg-content">
+        <div class="msg-name">${m.author}</div>
+        <div class="msg-bubble">${m.text}</div>
+        <div class="msg-time">${m.time}</div>
+      </div>
+    </div>`).join('');
+  el.scrollTop=el.scrollHeight;
+}
+
+function sendMsg(){
+  var input=document.getElementById('chatInput');
+  var t=input.value.trim(); if(!t) return;
+  var now=new Date();
+  current.chat.push({author:"Tú",av:"👤",time:now.getHours()+':'+String(now.getMinutes()).padStart(2,'0'),text:t,mine:true});
+  input.value=''; renderChatMessages();
+}
+function handleKey(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();} }
+
+renderGrid();
+</script>
+</body>
+</html>
